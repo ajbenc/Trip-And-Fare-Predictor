@@ -1,0 +1,43 @@
+# FastAPI Backend Container
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    gcc \
+    g++ \
+    curl \
+    gdal-bin \
+    libgdal-dev \
+    libgeos-dev \
+    libproj-dev \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install Python dependencies (use smaller docker requirements)
+COPY requirements.docker.txt ./requirements.docker.txt
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install -r requirements.docker.txt
+
+# Copy application code
+COPY src/ ./src/
+COPY models/ ./models/
+COPY Data/ ./Data/
+COPY docker_startup_check.py ./
+
+# Expose FastAPI port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Run startup check then FastAPI with uvicorn
+CMD ["python", "./docker_startup_check.py", "uvicorn", "src.interface.api.fastapi_app:app", "--host", "0.0.0.0", "--port", "8000"]

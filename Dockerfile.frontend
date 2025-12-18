@@ -1,0 +1,46 @@
+# Streamlit Frontend Container
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    STREAMLIT_SERVER_PORT=8501 \
+    STREAMLIT_SERVER_ADDRESS=0.0.0.0 \
+    STREAMLIT_SERVER_HEADLESS=true
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    gcc \
+    g++ \
+    curl \
+    gdal-bin \
+    libgdal-dev \
+    libgeos-dev \
+    libproj-dev \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install Python dependencies (use smaller docker requirements)
+COPY requirements.docker.txt ./requirements.docker.txt
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install -r requirements.docker.txt
+
+# Copy application code
+COPY src/ ./src/
+COPY models/ ./models/
+COPY Data/ ./Data/
+COPY docker_startup_check.py ./
+
+# Expose Streamlit port
+EXPOSE 8501
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:8501/_stcore/health || exit 1
+
+# Run startup check then Streamlit
+CMD ["python", "./docker_startup_check.py", "streamlit", "run", "src/interface/web/streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0"]

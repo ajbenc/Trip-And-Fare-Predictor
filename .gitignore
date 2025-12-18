@@ -1,0 +1,119 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# Environment variables
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Data files - Keep structure but exclude large files
+Data/processed/enhanced/
+Data/splits/train/*.parquet
+Data/splits/test/*.parquet
+Data/splits/val/*.parquet
+Data/splits_cleaned/train/*.parquet
+Data/splits_cleaned/test/*.parquet
+Data/splits_cleaned/val/*.parquet
+Data/splits_cleaned/train_68_features/*.parquet
+Data/splits_cleaned/test_68_features/*.parquet
+Data/splits_cleaned/train_80_20/*.parquet
+Data/splits_cleaned/test_80_20/*.parquet
+
+# Model files - Keep lightweight models, exclude large ones
+models/*/*.joblib
+models/*/*.pkl
+models/*/*.h5
+models/*/*.pt
+models/*/*.pth
+models/*/*.onnx
+*.model
+*.weights
+
+# Keep only documentation and metadata in models
+!models/*/README.md
+!models/*/model_metrics.json
+!models/*/*.txt
+!models/*/*.csv
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker
+.dockerignore
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# pytest
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Byte-compiled / optimized / DLL files
+*.pyc
+*.pyo
+*.pyd
+
+# Distribution / packaging
+*.whl

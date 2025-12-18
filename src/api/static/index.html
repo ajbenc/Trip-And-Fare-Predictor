@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYC Taxi Fare & Duration Predictor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .result-label {
+            font-size: 1.1em;
+            color: #666;
+        }
+        
+        .result-value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .result-value.fare {
+            color: #10b981;
+        }
+        
+        .result-value.duration {
+            color: #f59e0b;
+        }
+        
+        .confidence-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        
+        .confidence-high {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .confidence-medium {
+            background: #fed7aa;
+            color: #92400e;
+        }
+        
+        .confidence-low {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #fee2e2;
+            border-left: 4px solid #dc2626;
+            padding: 15px;
+            border-radius: 8px;
+            color: #991b1b;
+            display: none;
+            margin-top: 15px;
+        }
+        
+        .info {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            border-radius: 8px;
+            color: #1e40af;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚕 NYC Taxi Predictor</h1>
+            <p>Get instant fare and duration estimates powered by AI</p>
+        </div>
+        
+        <div class="card">
+            <form id="predictionForm">
+                <div class="form-group">
+                    <label for="datetime">📅 Pickup Date & Time</label>
+                    <input type="datetime-local" id="datetime" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="pickup_lon">📍 Pickup Longitude</label>
+                        <input type="number" id="pickup_lon" step="0.0001" value="-73.982" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="pickup_lat">📍 Pickup Latitude</label>
+                        <input type="number" id="pickup_lat" step="0.0001" value="40.767" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dropoff_lon">🎯 Dropoff Longitude</label>
+                        <input type="number" id="dropoff_lon" step="0.0001" value="-73.958" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="dropoff_lat">🎯 Dropoff Latitude</label>
+                        <input type="number" id="dropoff_lat" step="0.0001" value="40.778" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="passengers">👥 Passenger Count</label>
+                    <select id="passengers" required>
+                        <option value="1" selected>1 passenger</option>
+                        <option value="2">2 passengers</option>
+                        <option value="3">3 passengers</option>
+                        <option value="4">4 passengers</option>
+                        <option value="5">5 passengers</option>
+                        <option value="6">6 passengers</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn" id="predictBtn">
+                    🔮 Predict Fare & Duration
+                </button>
+            </form>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 10px; color: #666;">Making prediction...</p>
+            </div>
+            
+            <div class="error" id="error"></div>
+            
+            <div class="results" id="results">
+                <h2 style="margin-bottom: 20px; color: #333;">📊 Prediction Results</h2>
+                
+                <div class="result-item">
+                    <span class="result-label">💵 Estimated Fare</span>
+                    <span class="result-value fare" id="fareValue">$0.00</span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">⏱️ Estimated Duration</span>
+                    <span class="result-value duration" id="durationValue">0 min</span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">📏 Distance</span>
+                    <span class="result-value" id="distanceValue">0.0 mi</span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">🎯 Confidence</span>
+                    <span class="confidence-badge" id="confidenceBadge">-</span>
+                </div>
+            </div>
+            
+            <div class="info">
+                <strong>ℹ️ About the Models:</strong><br>
+                • Fare Prediction: LightGBM (94%+ accuracy)<br>
+                • Duration Prediction: Deep Neural Network (90%+ accuracy)<br>
+                • Trained on 33M+ NYC taxi trips
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:5000';
+        
+        // Set current datetime as default
+        document.getElementById('datetime').value = new Date().toISOString().slice(0, 16);
+        
+        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Get form values
+            const tripData = {
+                pickup_datetime: document.getElementById('datetime').value.replace('T', ' ') + ':00',
+                pickup_longitude: parseFloat(document.getElementById('pickup_lon').value),
+                pickup_latitude: parseFloat(document.getElementById('pickup_lat').value),
+                dropoff_longitude: parseFloat(document.getElementById('dropoff_lon').value),
+                dropoff_latitude: parseFloat(document.getElementById('dropoff_lat').value),
+                passenger_count: parseInt(document.getElementById('passengers').value)
+            };
+            
+            // Show loading, hide results and errors
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('predictBtn').disabled = true;
+            
+            try {
+                // Make API request
+                const response = await fetch(`${API_URL}/predict`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(tripData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Prediction failed');
+                }
+                
+                const result = await response.json();
+                
+                // Display results
+                document.getElementById('fareValue').textContent = `$${result.fare_amount.toFixed(2)}`;
+                document.getElementById('durationValue').textContent = `${result.duration_minutes.toFixed(1)} min`;
+                document.getElementById('distanceValue').textContent = `${result.trip_details.distance_miles.toFixed(2)} mi`;
+                
+                const confidenceBadge = document.getElementById('confidenceBadge');
+                confidenceBadge.textContent = result.confidence.toUpperCase();
+                confidenceBadge.className = `confidence-badge confidence-${result.confidence}`;
+                
+                document.getElementById('results').style.display = 'block';
+                
+            } catch (error) {
+                // Show error
+                document.getElementById('error').textContent = '❌ Prediction failed. Make sure the API is running on http://localhost:5000';
+                document.getElementById('error').style.display = 'block';
+                console.error('Error:', error);
+            } finally {
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('predictBtn').disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
