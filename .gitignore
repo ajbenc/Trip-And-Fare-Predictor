@@ -66,7 +66,6 @@ Data/splits_cleaned/test_80_20/*.parquet
 
 # Model files - Keep lightweight models, exclude large ones
 models/*/*.joblib
-models/*/*.pkl
 models/*/*.h5
 models/*/*.pt
 models/*/*.pth
@@ -74,7 +73,8 @@ models/*/*.onnx
 *.model
 *.weights
 
-# Keep only documentation and metadata in models
+# Keep model pickle files and documentation
+!models/*/*.pkl
 !models/*/README.md
 !models/*/model_metrics.json
 !models/*/*.txt
