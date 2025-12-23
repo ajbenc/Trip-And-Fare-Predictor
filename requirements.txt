@@ -6,7 +6,7 @@ lightgbm
 joblib
 
 # Web framework
-streamlit==1.29.0
+streamlit
 streamlit-folium
 folium
 
@@ -14,7 +14,6 @@ folium
 geopandas
 shapely
 pyproj
-pyogrio
 
 # API requests
 requests
