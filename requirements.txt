@@ -1,28 +1,24 @@
-pandas 
-numpy 
-scikit-learn 
-xgboost 
-lightgbm 
-matplotlib 
-seaborn 
-jupyter
-pyarrow
-fastparquet
-requests
-fastapi
-uvicorn[standard]
-pydantic
-pytest
-pytest-cov
-python-dotenv
+# Core data processing
+pandas
+numpy
+scikit-learn
+lightgbm
 joblib
-tensorflow
-torch
-torchvision
-streamlit
+
+# Web framework
+streamlit==1.29.0
 streamlit-folium
 folium
+
+# Geospatial
 geopandas
 shapely
 pyproj
 pyogrio
+
+# API requests
+requests
+
+# Data formats
+pyarrow
+fastparquet
