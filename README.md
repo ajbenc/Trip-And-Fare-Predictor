@@ -424,26 +424,9 @@ Should show: `duration_model_final.pkl`, `fare_model_final.pkl`
 
 ---
 
-## 🤝 Contributing
-
-This is a production system. For changes:
-
-1. Create feature branch
-2. Test thoroughly (especially data leakage checks)
-3. Update documentation
-4. Submit for review
-
----
-
 ## 📝 License
 
 MIT License - See LICENSE file for details
-
----
-
-## 👥 Team
-
-For questions or onboarding, see **[docs/TEAM_GUIDE.md](docs/TEAM_GUIDE.md)**
 
 ---
 
