@@ -12,11 +12,17 @@ import folium
 from datetime import datetime, date, time
 from src.domain.geo.zone_manager import ZoneManager
 from src.services.model_service import ModelService
+from src.services.geocoding_service import GeocodingService
+from src.services.weather_service import WeatherService
 import requests
 import os
 from pathlib import Path as _Path
 
 st.set_page_config(page_title="NYC Taxi Trip Predictor", layout="wide")
+
+# Initialize services
+geocoding_svc = GeocodingService()
+weather_svc = WeatherService()
 
 # Global header bar (full-width, sticky) replacing the previous st.title call
 HEADER_HTML = """
@@ -282,7 +288,36 @@ def _maybe_update_address(kind: str, point: dict):
         st.session_state[stat_name] = "fetching"
         st.session_state[http_name] = None
         st.session_state[err_name] = None
+        
+        # Try direct service call first (for Streamlit Cloud)
+        try:
+            addr = geocoding_svc.reverse(point['lat'], point['lng'])
+            if addr:
+                st.session_state[val_name] = addr
+                st.session_state[key_name] = key
+                st.session_state[stat_name] = "ok"
+                st.session_state[http_name] = 200
+                return
+        except Exception:
+            pass
+        
+        # Fallback to API if available
         r = requests.get(f"{API_BASE}/geocode/reverse", params={"latitude": point['lat'], "longitude": point['lng']}, timeout=6)
+        if r.status_code == 200:
+            addr = r.json().get("address")
+            if addr:
+                st.session_state[val_name] = addr
+                st.session_state[key_name] = key
+                st.session_state[stat_name] = "ok"
+                st.session_state[http_name] = 200
+            else:
+                st.session_state[val_name] = None
+                st.session_state[stat_name] = "unavailable"
+                st.session_state[http_name] = 200
+        elif r.status_code == 429:
+            # Nominatim rate-limited
+            st.session_state[val_name] = None
+            st.session_state[stat_name] = "rate_limited"
         if r.status_code == 200:
             addr = r.json().get("address")
             if addr:
@@ -496,19 +531,28 @@ if st.session_state['pickup'] and st.session_state['dropoff']:
     live_weather_used = False
     if use_live_weather:
         try:
-            r = requests.get(f"{API_BASE}/weather/live", params={
-                "latitude": pu['lat'],
-                "longitude": pu['lng'],
-                "when": pickup_dt.isoformat()
-            }, timeout=6)
-            if r.status_code == 200:
-                w = r.json().get("weather")
+            # Try direct service call first (for Streamlit Cloud)
+            try:
+                w = weather_svc.get_weather_features(pu['lat'], pu['lng'], pickup_dt)
                 if isinstance(w, dict) and w:
-                    # Keep only expected prediction keys plus extras for display
                     default_weather.update({k: v for k, v in w.items() if k in default_weather or k in (
                         'visibility_m','source','fetched_at'
                     )})
                     live_weather_used = True
+            except Exception:
+                # Fallback to API if available
+                r = requests.get(f"{API_BASE}/weather/live", params={
+                    "latitude": pu['lat'],
+                    "longitude": pu['lng'],
+                    "when": pickup_dt.isoformat()
+                }, timeout=6)
+                if r.status_code == 200:
+                    w = r.json().get("weather")
+                    if isinstance(w, dict) and w:
+                        default_weather.update({k: v for k, v in w.items() if k in default_weather or k in (
+                            'visibility_m','source','fetched_at'
+                        )})
+                        live_weather_used = True
         except Exception:
             pass
     default_holiday, holiday_label = infer_holiday(pickup_dt)
