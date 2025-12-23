@@ -10,10 +10,11 @@ streamlit
 streamlit-folium
 folium
 
-# Geospatial
+# Geospatial - Pure Python implementation
 geopandas
 shapely
 pyproj
+fiona
 
 # API requests
 requests
